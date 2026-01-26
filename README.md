@@ -18,8 +18,25 @@ A Python application that displays now playing information with real-time audio 
 
 ## Installation
 
+### 1. Clone the Repository
+
 ```bash
-pip install pyaudiowpatch numpy yt-dlp pillow colorama
+git clone https://github.com/sredniW1234/Audio-Bars.git
+cd audio-bars
+```
+
+### 2. Install Dependencies
+
+#### Option A: Using uv (Recommended)
+
+```bash
+uv pip install pyaudiowpatch numpy yt-dlp pillow colorama
+```
+
+#### Option B: Using pip with requirements.txt
+
+```bash
+pip install -r requirements.txt
 ```
 
 ## Usage
@@ -39,3 +56,4 @@ Press `Ctrl+C` to exit.
 ## Acknowledgments
 
 This project was developed with the assistance of AI, including code generation and optimization. However, a majority of it was created by the creator: Winders.
+
