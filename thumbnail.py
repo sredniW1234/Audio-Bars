@@ -7,18 +7,22 @@ def fetch_thumbnail(title, player: str) -> str:
     # Check if the player is a browser
     browser_players = ["chrome", "firefox", "edge", "opera", "brave"]
     if not any(browser in player.lower() for browser in browser_players):
-        return None
+        return ""
 
     ydl_opts = {"quiet": True, "skip_download": True, "no_warnings": True}
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(f"ytsearch1:{title}", download=False)
-        return info["entries"][0]["thumbnail"]
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f"ytsearch1:{title}", download=False)
+            return info["entries"][0]["thumbnail"]
+    except Exception as e:
+        print("Error fetching thumbnail:", str(e))
+        return ""
 
 
 def save_thumbnail(thumbnail_url, filename: str):
     """Saves the thumbnail image to a file."""
     print(thumbnail_url)
-    if thumbnail_url is None:
+    if thumbnail_url == "":
         return
     request = urllib.Request(thumbnail_url)
     pic = urllib.urlopen(request)
