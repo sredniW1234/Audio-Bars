@@ -1,5 +1,5 @@
 from thumbnail import fetch_thumbnail, save_thumbnail
-from winnplib import get_media_info_async
+from py_now_playing import NowPlaying
 from audio import Stream, get_spectrum
 from bar import Bar, MultiBar
 from ascii import AsciiImage
@@ -34,11 +34,21 @@ bass_db_range: tuple = (-40, 40)  # minimum, maximum
 mid_db_range: tuple = (-40, 40)
 treble_db_range: tuple = (-40, 20)
 
-decay: float = 0.4  # Lower == slower decay
+decay: float = 0.1
 
 # Ascii:
 ascii_size: int = 60
 ascii_square: bool = False  # Doesn't look quiet correct yet, but square enough /shrug
+
+
+async def get_info(playing: NowPlaying):
+    sessions = await playing._get_sessions()
+    for session in sessions:
+        model_id = session.source_app_user_model_id
+        info = await playing.get_now_playing(model_id) or {}  # type: ignore
+        info["player"] = model_id
+        return info
+    return {}
 
 
 def update_bars(bass, mid, treble):
@@ -71,8 +81,10 @@ def apply_decay(prev, current, decay=0.05):
 
 
 def main():
+    playing = NowPlaying()
+    run(playing.initalize_mediamanger())
     # Get initial info
-    info = run(get_media_info_async())
+    info = run(get_info(playing))
     title = info["title"] if info else "No song playing"
     artist = info["artist"] if info else "Unknown artist"
 
@@ -86,6 +98,9 @@ def main():
     curr_bass = 0
     curr_mid = 0
     curr_treble = 0
+    # Frames. Smaller value = more frequent updates, but more potential stutters
+    new_info_freq = 100
+    frames_passed = 0
 
     # clear terminal
     print("\033c", end="")
@@ -93,7 +108,10 @@ def main():
     try:
         while True:
             # Get Info
-            info = run(get_media_info_async())
+            frames_passed += 1
+            if frames_passed >= new_info_freq:
+                frames_passed = 0
+                info = run(get_info(playing))
             new_title = info["title"] if info else "No song playing"
             artist = info["artist"] if info else "Unknown artist"
 
@@ -161,6 +179,7 @@ def main():
 
     except Exception as e:
         stream.terminate()
+        print("\033c", end="")
         print("Error:", str(e).ljust(80))
         return
 
