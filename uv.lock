@@ -18,7 +18,6 @@ source = { virtual = "." }
 dependencies = [
     { name = "colorama" },
     { name = "numpy" },
-    { name = "py-now-playing" },
     { name = "pyaudiowpatch" },
     { name = "pyinstaller" },
     { name = "winnplib" },
@@ -29,7 +28,6 @@ dependencies = [
 requires-dist = [
     { name = "colorama", specifier = ">=0.4.6" },
     { name = "numpy", specifier = ">=2.4.1" },
-    { name = "py-now-playing", specifier = ">=0.1.0" },
     { name = "pyaudiowpatch", specifier = ">=0.2.12.8" },
     { name = "pyinstaller", specifier = ">=6.18.0" },
     { name = "winnplib", specifier = ">=0.1.4" },
@@ -142,19 +140,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/7b/f9/cfaa5082ca9bc4a6de66ffe1c12c2d90bf09c309a5f52b27759a596900e7/pillow-10.4.0-cp313-cp313-win32.whl", hash = "sha256:551d3fd6e9dc15e4c1eb6fc4ba2b39c0c7933fa113b220057a34f4bb3268a060", size = 2235603, upload-time = "2024-07-01T09:47:03.918Z" },
     { url = "https://files.pythonhosted.org/packages/01/6a/30ff0eef6e0c0e71e55ded56a38d4859bf9d3634a94a88743897b5f96936/pillow-10.4.0-cp313-cp313-win_amd64.whl", hash = "sha256:030abdbe43ee02e0de642aee345efa443740aa4d828bfe8e2eb11922ea6a21ea", size = 2554972, upload-time = "2024-07-01T09:47:06.152Z" },
     { url = "https://files.pythonhosted.org/packages/48/2c/2e0a52890f269435eee38b21c8218e102c621fe8d8df8b9dd06fabf879ba/pillow-10.4.0-cp313-cp313-win_arm64.whl", hash = "sha256:5b001114dd152cfd6b23befeb28d7aee43553e2402c9f159807bf55f33af8a8d", size = 2243375, upload-time = "2024-07-01T09:47:09.065Z" },
-]
-
-[[package]]
-name = "py-now-playing"
-version = "0.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pillow" },
-    { name = "winsdk" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b8/1b/e5bdd2437865e1605b8ed35d2ebf44a5360cc3c76ddd04ef1e918daf726c/py_now_playing-0.1.0.tar.gz", hash = "sha256:d754aef8652d5477a92ac7871c9795d0c7e92ba91e82e8857ee81dc24c7bfcd8", size = 14961, upload-time = "2023-12-23T22:04:47.245Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/61/13/95f6076d0eb69b7d0631d3d5957f2425e7a00e465d75335fd37997336d73/py_now_playing-0.1.0-py3-none-any.whl", hash = "sha256:5c07541b36de7e115bdaad26d2f2849b39a8fd6a14849c903e0af3c78a6dd91e", size = 15521, upload-time = "2023-12-23T22:04:46.114Z" },
 ]
 
 [[package]]
@@ -372,12 +357,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f4/3d/aae50b1d0e37b5a61055759aedd42c6c99d7c17ab8c3e568ab33c0288938/winrt_windows_storage_streams-3.2.1-cp314-cp314-win_amd64.whl", hash = "sha256:3c5bf41d725369b9986e6d64bad7079372b95c329897d684f955d7028c7f27a0", size = 135566, upload-time = "2025-09-20T07:17:17.69Z" },
     { url = "https://files.pythonhosted.org/packages/bb/c3/6d3ce7a58e6c828e0795c9db8790d0593dd7fdf296e513c999150deb98d4/winrt_windows_storage_streams-3.2.1-cp314-cp314-win_arm64.whl", hash = "sha256:293e09825559d0929bbe5de01e1e115f7a6283d8996ab55652e5af365f032987", size = 134393, upload-time = "2025-09-20T07:17:18.802Z" },
 ]
-
-[[package]]
-name = "winsdk"
-version = "1.0.0b10"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f5/01/005772332e79947013aa33c7cb20431e3efd6ac46eb54aed3472c14afe50/winsdk-1.0.0b10.tar.gz", hash = "sha256:8f39ea759626797449371f857c9085b84bb9f3b6d493dc6525e2cedcb3d15ea2", size = 7061492, upload-time = "2023-08-11T19:47:58.008Z" }
 
 [[package]]
 name = "yt-dlp"

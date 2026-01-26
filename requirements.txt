@@ -13,11 +13,7 @@ packaging==26.0
 pefile==2024.8.26
     # via pyinstaller
 pillow==10.4.0
-    # via
-    #   py-now-playing
-    #   winnplib
-py-now-playing==0.1.0
-    # via audio-bars (pyproject.toml)
+    # via winnplib
 pyaudiowpatch==0.2.12.8
     # via audio-bars (pyproject.toml)
 pyinstaller==6.18.0
@@ -54,7 +50,5 @@ winrt-windows-storage==3.2.1
     # via winnplib
 winrt-windows-storage-streams==3.2.1
     # via winnplib
-winsdk==1.0.0b10
-    # via py-now-playing
 yt-dlp==2025.12.8
     # via audio-bars (pyproject.toml)
