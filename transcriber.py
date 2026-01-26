@@ -9,12 +9,12 @@ class Lyrics:
         self.timed_lyrics = {}
         self.lock = threading.Lock()
 
-    def search(self):
+    def search(self) -> str:
         lyrics = sl.search(
             search_term=f"{self.title} {self.artist}",
             synced_only=True,
         )
-        return lyrics
+        return lyrics or ""
 
     def _lrc_time_to_seconds(self, lrc_time: str) -> int:
         lrc_times = lrc_time.split(":")
@@ -33,10 +33,10 @@ class Lyrics:
 
         return int(time / 1000)  # Converting back to seconds
 
-    def parse(self, lyrics: str | None) -> dict:
+    def parse(self, lyrics: str) -> dict:
         timed_lyrics = {}
-        if lyrics is None:
-            return {}
+        if lyrics == "":
+            return {-1: "No Lyrics Available."}
         for line in lyrics.splitlines():
             time = line[:11]
             if time[-1] != "]":
@@ -63,4 +63,6 @@ class Lyrics:
         thread.start()
 
     def get_lyric(self, time: int):
+        if self.timed_lyrics.get(-1):
+            return self.timed_lyrics.get(-1)
         return self.timed_lyrics.get(time, "")

@@ -113,7 +113,6 @@ def main():
     artist = info["artist"] if info else "Unknown artist"
 
     # Lyrics
-    lyrics.retrieve()
     lyric_to_display = ""
     if display_lyrics:
         lyrics = Lyrics(title, artist)
@@ -157,7 +156,7 @@ def main():
                 curr_time = 0
                 thumbnail_url = fetch_thumbnail(title, info["player"])
                 save_thumbnail(thumbnail_url, "thumbnail.png")
-                lyrics.retrieve()
+                if display_lyrics:
                     lyric_to_display = ""
                     lyrics = Lyrics(title, artist)
                     lyrics.retrieve()
