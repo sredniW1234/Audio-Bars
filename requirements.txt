@@ -2,8 +2,16 @@
 #    uv pip compile pyproject.toml -o requirements.txt
 altgraph==0.17.5
     # via pyinstaller
+beautifulsoup4==4.14.3
+    # via syncedlyrics
+certifi==2026.1.4
+    # via requests
+charset-normalizer==3.4.4
+    # via requests
 colorama==0.4.6
     # via audio-bars (pyproject.toml)
+idna==3.11
+    # via requests
 numpy==2.4.1
     # via audio-bars (pyproject.toml)
 packaging==26.0
@@ -13,7 +21,9 @@ packaging==26.0
 pefile==2024.8.26
     # via pyinstaller
 pillow==10.4.0
-    # via winnplib
+    # via py-now-playing
+py-now-playing==0.1.0
+    # via audio-bars (pyproject.toml)
 pyaudiowpatch==0.2.12.8
     # via audio-bars (pyproject.toml)
 pyinstaller==6.18.0
@@ -22,33 +32,23 @@ pyinstaller-hooks-contrib==2026.0
     # via pyinstaller
 pywin32-ctypes==0.2.3
     # via pyinstaller
+rapidfuzz==3.14.3
+    # via syncedlyrics
+requests==2.32.5
+    # via syncedlyrics
 setuptools==80.10.2
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
-typing-extensions==4.15.0
-    # via winrt-runtime
-winnplib==0.1.4
+soupsieve==2.8.3
+    # via beautifulsoup4
+syncedlyrics==1.0.1
     # via audio-bars (pyproject.toml)
-winrt-runtime==3.2.1
-    # via
-    #   winrt-windows-foundation
-    #   winrt-windows-foundation-collections
-    #   winrt-windows-media
-    #   winrt-windows-media-control
-    #   winrt-windows-storage
-    #   winrt-windows-storage-streams
-winrt-windows-foundation==3.2.1
-    # via winnplib
-winrt-windows-foundation-collections==3.2.1
-    # via winnplib
-winrt-windows-media==3.2.1
-    # via winnplib
-winrt-windows-media-control==3.2.1
-    # via winnplib
-winrt-windows-storage==3.2.1
-    # via winnplib
-winrt-windows-storage-streams==3.2.1
-    # via winnplib
+typing-extensions==4.15.0
+    # via beautifulsoup4
+urllib3==2.6.3
+    # via requests
+winsdk==1.0.0b10
+    # via py-now-playing
 yt-dlp==2025.12.8
     # via audio-bars (pyproject.toml)
