@@ -1,9 +1,11 @@
 from thumbnail import fetch_thumbnail, save_thumbnail
-from py_now_playing import NowPlaying
 from audio import Stream, get_spectrum
+from py_now_playing import NowPlaying
+from transcriber import Lyrics
 from bar import Bar, MultiBar
 from ascii import AsciiImage
 from asyncio import run
+from time import time
 import numpy as np
 
 """
@@ -41,14 +43,18 @@ ascii_size: int = 60
 ascii_square: bool = False  # Doesn't look quiet correct yet, but square enough /shrug
 
 
-async def get_info(playing: NowPlaying):
+async def get_info(playing: NowPlaying) -> dict:
     sessions = await playing._get_sessions()
     for session in sessions:
-        model_id = session.source_app_user_model_id
+        model_id = session.source_app_user_model_id  # type:ignore
         info = await playing.get_now_playing(model_id) or {}  # type: ignore
         info["player"] = model_id
         return info
-    return {}
+    return {
+        "title": "",
+        "artist": "",
+        "player": "",
+    }
 
 
 def update_bars(bass, mid, treble):
@@ -80,27 +86,39 @@ def apply_decay(prev, current, decay=0.05):
         return prev * (1 - decay) + current * decay
 
 
+# def retrieve_lyrics(title, artist):
+
+
 def main():
     playing = NowPlaying()
     run(playing.initalize_mediamanger())
+    playing.get_active_app_user_model_ids
     # Get initial info
     info = run(get_info(playing))
     title = info["title"] if info else "No song playing"
     artist = info["artist"] if info else "Unknown artist"
 
+    # Lyrics
+    lyrics = Lyrics(title, artist)
+    lyrics.retrieve()
+
     # Get thumbnail
     thumbnail_url = fetch_thumbnail(title, info["player"])
     save_thumbnail(thumbnail_url, "thumbnail.png")
     ascii_image = AsciiImage("thumbnail.png")
-
+    # return
     # Initialize audio stream
     stream = Stream()
     curr_bass = 0
     curr_mid = 0
     curr_treble = 0
-    # Frames. Smaller value = more frequent updates, but more potential stutters
-    new_info_freq = 100
+
+    # new_info_freq in Frames. Smaller value = more frequent updates, but more potential stutters
+    # Also note that the higher this is set, the more lag there before song_start is updated
+    new_info_freq = 0
     frames_passed = 0
+    song_start = time()
+    curr_time = 0
 
     # clear terminal
     print("\033c", end="")
@@ -118,10 +136,13 @@ def main():
             # Update thumbnail if title changed
             if new_title != title:
                 title = new_title
+                song_start = time()
+                curr_time = 0
                 thumbnail_url = fetch_thumbnail(title, info["player"])
                 save_thumbnail(thumbnail_url, "thumbnail.png")
+                lyrics = Lyrics(title, artist)
+                lyrics.retrieve()
                 print("\033c", end="")
-
             # Process audio
             spectrum = get_spectrum(
                 stream.mononize(stream.raw_to_float(stream.get())), stream.sample_rate
@@ -159,15 +180,24 @@ def main():
                 max_db=treble_db_range[1],
             )
 
+            # if bass_percent or mid_percent or treble_percent:
+            curr_time = time()
+
             # Apply decay
             curr_bass = apply_decay(curr_bass, bass_percent, decay=decay)
             curr_mid = apply_decay(curr_mid, mid_percent, decay=decay)
             curr_treble = apply_decay(curr_treble, treble_percent, decay=decay)
 
+            # Get lyrics
+            lyric_time = int(curr_time - song_start)
+            lyric_to_display = lyrics.get_lyric(lyric_time)
+
             # Display
-            for line in ascii_image.ascii_image_str(ascii_size, ascii_square):
-                print(line, end="")
+            # for line in ascii_image.ascii_image_str(ascii_size, ascii_square):
+            # print(line, end="")
+
             print(f"{title} - {artist}".ljust(80))
+            print(f"Lyrics: {lyric_to_display}")
             update_bars(curr_bass * 100, curr_mid * 100, curr_treble * 100)
             print(f"\x1b[{ascii_size}A", end="")  # Move cursor up to redraw
             print(f"\x1b[{ascii_size}A", end="")  # Move cursor up to redraw
@@ -177,11 +207,11 @@ def main():
         print("\033c", end="")
         return
 
-    except Exception as e:
-        stream.terminate()
-        print("\033c", end="")
-        print("Error:", str(e).ljust(80))
-        return
+    # except Exception as e:
+    #     stream.terminate()
+    #     print("\033c", end="")
+    #     print("Error:", str(e).ljust(80))
+    #     return
 
 
 if __name__ == "__main__":

@@ -1,0 +1,66 @@
+import syncedlyrics as sl
+import threading
+
+
+class Lyrics:
+    def __init__(self, title: str, artist: str) -> None:
+        self.title = title
+        self.artist = artist
+        self.timed_lyrics = {}
+        self.lock = threading.Lock()
+
+    def search(self):
+        lyrics = sl.search(
+            search_term=f"{self.title} {self.artist}",
+            synced_only=True,
+        )
+        return lyrics
+
+    def _lrc_time_to_seconds(self, lrc_time: str) -> int:
+        lrc_times = lrc_time.split(":")
+
+        HOUR_MILLISECONDS = 3.6e6
+        MINUTE_MILLISECONDS = 60000
+        SECOND_MILLESECONDS = 1000
+        time = 0
+        if len(lrc_times) == 3:
+            # hours
+            time += int(lrc_times[0]) * HOUR_MILLISECONDS
+            lrc_times.pop(0)
+        time += int(lrc_times[0]) * MINUTE_MILLISECONDS
+        time += int(lrc_times[1].split(".")[0]) * SECOND_MILLESECONDS
+        time += int(lrc_times[1].split(".")[1])
+
+        return int(time / 1000)  # Converting back to seconds
+
+    def parse(self, lyrics: str | None) -> dict:
+        timed_lyrics = {}
+        if lyrics is None:
+            return {}
+        for line in lyrics.splitlines():
+            time = line[:11]
+            if time[-1] != "]":
+                # Hours
+                time = line[:14]
+                if time[-1] != "]":
+                    # Just return bc who has a video thats more than xx hours long?
+                    return {}
+                time = time[1:13]
+            else:
+                time = time[1:10]
+            timed_lyrics[self._lrc_time_to_seconds(time)] = line[11:]
+
+        return timed_lyrics
+
+    def retrieve(self):
+        def get():
+            lyrics = self.parse(self.search())
+            with self.lock:
+                self.timed_lyrics = lyrics
+            print("\033c", end="")  # In case of error, clear console
+
+        thread = threading.Thread(target=get)
+        thread.start()
+
+    def get_lyric(self, time: int):
+        return self.timed_lyrics.get(time, "")

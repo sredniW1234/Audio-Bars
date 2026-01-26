@@ -100,6 +100,8 @@ class Stream:
         :param audio: The audio data as a numpy array.
         :type audio: np.ndarray
         """
+        if audio.size == 0:
+            return audio
         audio = audio.reshape(-1, audio.shape[-1])
         # Get mono
         audio = np.mean(audio, axis=1)
@@ -123,6 +125,8 @@ def get_spectrum(audio: np.ndarray, sample_rate: int) -> np.ndarray:
     :param sample_rate: The sample rate of the audio data.
     :type sample_rate: int
     """
+    if audio.size == 0:
+        return np.array([])
     # Apply Hanning window
     window = np.hanning(len(audio))
     windowed = audio * window
