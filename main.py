@@ -24,7 +24,7 @@ Note: Some code was generated with the help of ChatGPT. Though I have modified i
 # TODO: Make Title print more pretty
 # TODO: Make Icon for exe
 
-# Some simple Settings:
+# --- Settings ---
 # Bars:
 bar_total_length: int = 40  # Characters
 
@@ -40,8 +40,13 @@ treble_db_range: tuple = (-40, 20)
 decay: float = 0.1
 
 # Ascii:
+ascii_art = True
+colored_ascii = True
 ascii_size: int = 60
 ascii_square: bool = False  # Doesn't look quiet correct yet, but square enough /shrug
+
+# Lyrics:
+display_lyrics = True
 
 
 async def get_info(playing: NowPlaying) -> dict:
@@ -108,9 +113,11 @@ def main():
     artist = info["artist"] if info else "Unknown artist"
 
     # Lyrics
-    lyric_to_display = "No Lyrics Available."
-    lyrics = Lyrics(title, artist)
     lyrics.retrieve()
+    lyric_to_display = ""
+    if display_lyrics:
+        lyrics = Lyrics(title, artist)
+        lyrics.retrieve()
 
     # Get thumbnail
     thumbnail_url = fetch_thumbnail(title, info["player"])
@@ -150,9 +157,10 @@ def main():
                 curr_time = 0
                 thumbnail_url = fetch_thumbnail(title, info["player"])
                 save_thumbnail(thumbnail_url, "thumbnail.png")
-                lyric_to_display = "No Lyrics Available."
-                lyrics = Lyrics(title, artist)
                 lyrics.retrieve()
+                    lyric_to_display = ""
+                    lyrics = Lyrics(title, artist)
+                    lyrics.retrieve()
                 print("\033c", end="")
             # Process audio
             spectrum = get_spectrum(
@@ -200,16 +208,24 @@ def main():
             curr_treble = apply_decay(curr_treble, treble_percent, decay=decay)
 
             # Get lyrics
-            lyric_time = int(curr_time - song_start)
-            if lyrics.get_lyric(lyric_time):
-                lyric_to_display = lyrics.get_lyric(lyric_time)
+            if display_lyrics:
+                lyric_time = int(curr_time - song_start)
+                if lyrics.get_lyric(lyric_time):
+                    lyric_to_display = lyrics.get_lyric(lyric_time)
 
             # Display
-            for line in ascii_image.ascii_image_str(ascii_size, ascii_square):
-                print(line, end="")
+            if ascii_art:
+                for line in ascii_image.ascii_image_str(
+                    ascii_size, ascii_square, colored=colored_ascii
+                ):
+                    print(line, end="")
 
+            print("-" * get_console_width())
             print(f"{title} - {artist}".ljust(get_console_width()))
-            print(f"Lyrics: {lyric_to_display}".ljust(get_console_width()))
+            print("-" * get_console_width())
+            if display_lyrics and lyric_to_display:
+                print(f"Lyrics: {lyric_to_display}".ljust(get_console_width()))
+                print("-" * get_console_width())
             update_bars(curr_bass * 100, curr_mid * 100, curr_treble * 100)
             print(f"\x1b[{ascii_size}A", end="")  # Move cursor up to redraw
             print(f"\x1b[{ascii_size}A", end="")  # Move cursor up to redraw

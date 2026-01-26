@@ -55,7 +55,7 @@ class AsciiImage:
         """
         return f"\033[38;2;{r};{g};{b}m"
 
-    def ascii_image(self, width, square: bool):
+    def ascii_image(self, width, square: bool, colored=False):
         """
         Prints the ASCII art to the terminal.
 
@@ -69,11 +69,14 @@ class AsciiImage:
                 pixel = g_img.getpixel((x, y))
                 rgb = img.getpixel((x, y))
                 pixel = np.array(pixel) * len(self.characters) // 256
-                print(self.get_color_code(*rgb) + self.characters[pixel], end="")
+                if colored:
+                    print(self.get_color_code(*rgb) + self.characters[pixel], end="")
+                else:
+                    print(self.characters[pixel], end="")
                 print(self.characters[pixel], end="" + Fore.RESET)
             print()
 
-    def ascii_image_str(self, width, square: bool):
+    def ascii_image_str(self, width, square: bool, colored=False) -> list:
         """
         Returns the ASCII art as a list of strings.
 
@@ -89,10 +92,13 @@ class AsciiImage:
                 pixel = g_img.getpixel((x, y))
                 rgb = img.getpixel((x, y))
                 pixel = np.array(pixel) * len(self.characters) // 256
-                line.append(
-                    self.get_color_code(*rgb)
-                    + self.characters[pixel]
-                    + self.characters[pixel]
-                )
+                if colored:
+                    line.append(
+                        self.get_color_code(*rgb)
+                        + self.characters[pixel]
+                        + self.characters[pixel]
+                    )
+                else:
+                    line.append(self.characters[pixel] + self.characters[pixel])
             image_str.append("".join(line) + "\n" + Fore.RESET)
         return image_str
