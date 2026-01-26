@@ -19,6 +19,7 @@ Note: Some code was generated with the help of ChatGPT. Though I have modified i
 # TODO: Add command line arguments for settings
 # TODO: Make bars more visually appealing
 # TODO: Make Title print more pretty
+# TODO: Make Icon for exe
 
 # Some simple Settings:
 # Bars:
