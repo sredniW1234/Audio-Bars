@@ -7,6 +7,7 @@ from ascii import AsciiImage
 from asyncio import run
 from time import time
 import numpy as np
+import os
 
 """
 Main application to display now playing info with audio bars and ASCII art thumbnail.
@@ -63,7 +64,7 @@ def update_bars(bass, mid, treble):
     treble_bar = Bar("Treble", bar_total_length, 8, True)
 
     bar = MultiBar([bass_bar, mid_bar, treble_bar])
-    bar.show([bass, mid, treble])
+    bar.show([bass, mid, treble], get_console_width())
 
 
 def compute_percent(band_magnitudes, max_val=160, use_db=False, min_db=-40, max_db=0):
@@ -86,6 +87,14 @@ def apply_decay(prev, current, decay=0.05):
         return prev * (1 - decay) + current * decay
 
 
+def get_console_width():
+    try:
+        size = os.get_terminal_size()
+        return size.columns
+    except OSError:
+        return 80
+
+
 # def retrieve_lyrics(title, artist):
 
 
@@ -99,6 +108,7 @@ def main():
     artist = info["artist"] if info else "Unknown artist"
 
     # Lyrics
+    lyric_to_display = "No Lyrics Available."
     lyrics = Lyrics(title, artist)
     lyrics.retrieve()
 
@@ -140,6 +150,7 @@ def main():
                 curr_time = 0
                 thumbnail_url = fetch_thumbnail(title, info["player"])
                 save_thumbnail(thumbnail_url, "thumbnail.png")
+                lyric_to_display = "No Lyrics Available."
                 lyrics = Lyrics(title, artist)
                 lyrics.retrieve()
                 print("\033c", end="")
@@ -190,14 +201,15 @@ def main():
 
             # Get lyrics
             lyric_time = int(curr_time - song_start)
-            lyric_to_display = lyrics.get_lyric(lyric_time)
+            if lyrics.get_lyric(lyric_time):
+                lyric_to_display = lyrics.get_lyric(lyric_time)
 
             # Display
-            # for line in ascii_image.ascii_image_str(ascii_size, ascii_square):
-            # print(line, end="")
+            for line in ascii_image.ascii_image_str(ascii_size, ascii_square):
+                print(line, end="")
 
-            print(f"{title} - {artist}".ljust(80))
-            print(f"Lyrics: {lyric_to_display}")
+            print(f"{title} - {artist}".ljust(get_console_width()))
+            print(f"Lyrics: {lyric_to_display}".ljust(get_console_width()))
             update_bars(curr_bass * 100, curr_mid * 100, curr_treble * 100)
             print(f"\x1b[{ascii_size}A", end="")  # Move cursor up to redraw
             print(f"\x1b[{ascii_size}A", end="")  # Move cursor up to redraw

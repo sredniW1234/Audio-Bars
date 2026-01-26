@@ -25,7 +25,7 @@ class Bar:
         self.total_length = total_length
         self.internal_numbers = internal_numbers
 
-    def show(self, percent: float, ommit_print: bool = False) -> str:
+    def show(self, percent: float, ommit_print: bool = False, just: int = 0) -> str:
         """
         Displays the bar on the screen.
 
@@ -54,7 +54,7 @@ class Bar:
         bar = (
             self.name
             + f"[{get_bars()}{(f' {str(int(percent*100)).rjust(2, "0").rjust(3)}%') if self.internal_numbers else ''}] {'' if self.internal_numbers else (str(int(percent*100)).ljust(2)+'%')}"
-        )
+        ).ljust(just)
 
         if not ommit_print:
             print(bar, end="\r", flush=True)
@@ -71,7 +71,7 @@ class MultiBar:
         """
         self.bars = bars
 
-    def show(self, percents: list[float]):
+    def show(self, percents: list[float], just: int = 0):
         """
         Docstring for show
 
@@ -82,7 +82,7 @@ class MultiBar:
             raise ValueError("Number of percents must match number of bars")
 
         for bar, percent in zip(self.bars, percents):
-            bar = bar.show(percent, True)
+            bar = bar.show(percent, True, just)
             print(bar)
 
         print(f"\x1b[{len(self.bars)}A", end="")
