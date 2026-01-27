@@ -206,7 +206,7 @@ def main():
                 print("\033c", end="")
             # Process audio
 
-            curr_bass, curr_mid, curr_time = compute_spectrum(
+            curr_bass, curr_mid, curr_treble = compute_spectrum(
                 stream,
                 curr_bass,
                 curr_mid,
