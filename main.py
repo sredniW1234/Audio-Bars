@@ -100,6 +100,48 @@ def get_console_width():
         return 80
 
 
+def compute_spectrum(stream: Stream, curr_bass, curr_mid, curr_treble):
+    spectrum = get_spectrum(
+        stream.mononize(stream.raw_to_float(stream.get())), stream.sample_rate
+    )
+    # Get spectrum for each of the three ranges
+    bass = spectrum[
+        (spectrum[:, 0] >= bass_range[0]) & (spectrum[:, 0] <= bass_range[1])
+    ]
+    mid = spectrum[(spectrum[:, 0] >= mid_range[0]) & (spectrum[:, 0] <= mid_range[1])]
+    treble = spectrum[
+        (spectrum[:, 0] >= treble_range[0]) & (spectrum[:, 0] <= treble_range[1])
+    ]
+
+    # Compute their percents
+    bass_percent = compute_percent(
+        bass[:, 1],
+        use_db=True,
+        min_db=bass_db_range[0],
+        max_db=bass_db_range[1],
+    )
+    mid_percent = compute_percent(
+        mid[:, 1],
+        use_db=True,
+        min_db=mid_db_range[0],
+        max_db=mid_db_range[1],
+    )
+    treble_percent = compute_percent(
+        treble[:, 1],
+        use_db=True,
+        min_db=treble_db_range[0],
+        max_db=treble_db_range[1],
+    )
+
+    # Apply decay
+    new_values = (
+        apply_decay(curr_bass, bass_percent, decay=decay),
+        apply_decay(curr_mid, mid_percent, decay=decay),
+        apply_decay(curr_treble, treble_percent, decay=decay),
+    )
+    return new_values
+
+
 # def retrieve_lyrics(title, artist):
 
 
@@ -115,7 +157,7 @@ def main():
     # Lyrics
     lyric_to_display = ""
     if display_lyrics:
-        lyrics = Lyrics(title, artist)
+        lyrics = Lyrics(title, "")
         lyrics.retrieve()
 
     # Get thumbnail
@@ -137,6 +179,7 @@ def main():
     curr_time = 0
 
     # clear terminal
+    # return
     print("\033c", end="")
 
     try:
@@ -158,53 +201,19 @@ def main():
                 save_thumbnail(thumbnail_url, "thumbnail.png")
                 if display_lyrics:
                     lyric_to_display = ""
-                    lyrics = Lyrics(title, artist)
+                    lyrics = Lyrics(title, "")
                     lyrics.retrieve()
                 print("\033c", end="")
             # Process audio
-            spectrum = get_spectrum(
-                stream.mononize(stream.raw_to_float(stream.get())), stream.sample_rate
+
+            curr_bass, curr_mid, curr_time = compute_spectrum(
+                stream,
+                curr_bass,
+                curr_mid,
+                curr_treble,
             )
 
-            # Get spectrum for each of the three ranges
-            bass = spectrum[
-                (spectrum[:, 0] >= bass_range[0]) & (spectrum[:, 0] <= bass_range[1])
-            ]
-            mid = spectrum[
-                (spectrum[:, 0] >= mid_range[0]) & (spectrum[:, 0] <= mid_range[1])
-            ]
-            treble = spectrum[
-                (spectrum[:, 0] >= treble_range[0])
-                & (spectrum[:, 0] <= treble_range[1])
-            ]
-
-            # Compute their percents
-            bass_percent = compute_percent(
-                bass[:, 1],
-                use_db=True,
-                min_db=bass_db_range[0],
-                max_db=bass_db_range[1],
-            )
-            mid_percent = compute_percent(
-                mid[:, 1],
-                use_db=True,
-                min_db=mid_db_range[0],
-                max_db=mid_db_range[1],
-            )
-            treble_percent = compute_percent(
-                treble[:, 1],
-                use_db=True,
-                min_db=treble_db_range[0],
-                max_db=treble_db_range[1],
-            )
-
-            # if bass_percent or mid_percent or treble_percent:
             curr_time = time()
-
-            # Apply decay
-            curr_bass = apply_decay(curr_bass, bass_percent, decay=decay)
-            curr_mid = apply_decay(curr_mid, mid_percent, decay=decay)
-            curr_treble = apply_decay(curr_treble, treble_percent, decay=decay)
 
             # Get lyrics
             if display_lyrics:
@@ -222,7 +231,7 @@ def main():
             print("-" * get_console_width())
             print(f"{title} - {artist}".ljust(get_console_width()))
             print("-" * get_console_width())
-            if display_lyrics and lyric_to_display:
+            if display_lyrics:
                 print(f"Lyrics: {lyric_to_display}".ljust(get_console_width()))
                 print("-" * get_console_width())
             update_bars(curr_bass * 100, curr_mid * 100, curr_treble * 100)
