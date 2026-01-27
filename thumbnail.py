@@ -32,11 +32,3 @@ class Thumbnail:
         # urllib.urlretrieve(self.url, filePath)
         with open(filename, "wb") as localFile:
             localFile.write(pic.read())
-
-    def get(self, title, player):
-        thread = threading.Thread(
-            target=lambda: self.save_thumbnail(
-                self.fetch_thumbnail(title, player), "./thumbnail.png"
-            )
-        )
-        thread.start()

@@ -124,7 +124,9 @@ def main():
 
     # Get thumbnail
     thumbnail = Thumbnail()
-    thumbnail.get(title, player)
+    thumbnail.save_thumbnail(
+        thumbnail_url=thumbnail.fetch_thumbnail(title, player), filename="thumbnail.png"
+    )
     ascii_image = AsciiImage("thumbnail.png")
     # return
     # Initialize audio stream
@@ -166,7 +168,10 @@ def main():
             # Update thumbnail if title changed
             if new_title != title:
                 title = new_title
-                thumbnail.get(title, player)
+                thumbnail.save_thumbnail(
+                    thumbnail_url=thumbnail.fetch_thumbnail(title, player),
+                    filename="thumbnail.png",
+                )
 
                 if display_lyrics:
                     lyric_to_display = ""
