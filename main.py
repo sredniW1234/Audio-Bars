@@ -5,6 +5,7 @@ from transcriber import Lyrics
 from bar import Bar, MultiBar
 from ascii import AsciiImage
 from asyncio import run
+from math import floor
 from time import time
 import numpy as np
 import os
@@ -17,7 +18,6 @@ Note: Some code was generated with the help of ChatGPT. Though I have modified i
 
 # TODO: Improve ASCII art aspect ratio handling
 # TODO: Don't download thumbnail and only get the PIL image in memory
-# TODO: Add volume bar
 # TODO: Fine tune db_range settings  --Partially done. Needs more though.
 # TODO: Add command line arguments for settings
 # TODO: Make bars more visually appealing
@@ -43,7 +43,7 @@ volume_db_range: tuple = (-70, -10)
 decay: float = 0.3
 
 # Ascii:
-ascii_art = True
+ascii_art = False
 colored_ascii = True
 ascii_size: int = 60
 ascii_square: bool = False  # Doesn't look quiet correct yet, but square enough /shrug
@@ -53,16 +53,20 @@ display_lyrics = True
 
 
 async def get_info(playing: NowPlaying) -> dict:
-    sessions = await playing._get_sessions()
-    for session in sessions:
-        model_id = session.source_app_user_model_id  # type:ignore
-        info = await playing.get_now_playing(model_id) or {}  # type: ignore
+    session = playing._manager.get_current_session()
+    # for session in sessions:
+    if session:
+        model_id = session.source_app_user_model_id
+        info = await playing.get_now_playing(model_id) or {}
         info["player"] = model_id
+        playback = session.get_playback_info()
+        info["playback_state"] = str(playback.playback_status) if playback else "4"
         return info
     return {
         "title": "",
         "artist": "",
         "player": "",
+        "playback_state": "",
     }
 
 
@@ -189,6 +193,7 @@ def main():
     frames_passed = 0
     song_start = time()
     curr_time = 0
+    paused_at = 0
 
     # clear terminal
     # return
@@ -222,11 +227,19 @@ def main():
                 stream, curr_bass, curr_mid, curr_treble, curr_volume
             )
 
-            curr_time = time()
+            curr_time = int(time() - song_start)
+
+            if info["playback_state"] != "4":  # Not playing
+                if paused_at == 0:
+                    paused_at = curr_time  # Make sure they're synced
+            else:
+                if paused_at != 0:  # Reset curr_time to what it was previously
+                    song_start += int(curr_time - paused_at)
+                paused_at = 0
 
             # Get lyrics
             if display_lyrics:
-                lyric_time = int(curr_time - song_start)
+                lyric_time = curr_time
                 if lyrics.get_lyric(lyric_time):
                     lyric_to_display = lyrics.get_lyric(lyric_time)
 
