@@ -38,6 +38,7 @@ treble_range: tuple = (4000, 20000)
 bass_db_range: tuple = (-40, 40)  # minimum, maximum
 mid_db_range: tuple = (-40, 20)
 treble_db_range: tuple = (-50, 10)
+volume_db_range: tuple = (-70, -10)
 
 decay: float = 0.3
 
@@ -65,23 +66,29 @@ async def get_info(playing: NowPlaying) -> dict:
     }
 
 
-def update_bars(bass, mid, treble):
-    bass_bar = Bar("Bass", bar_total_length, 8, True)
-    mid_bar = Bar("Mid ", bar_total_length, 8, True)
-    treble_bar = Bar("Treble", bar_total_length, 8, True)
+def update_bars(*percents):
+    bass_bar = Bar("Bass:", bar_total_length, 10, True)
+    mid_bar = Bar("Mid:", bar_total_length, 10, True)
+    treble_bar = Bar("Treble:", bar_total_length, 10, True)
+    volume_bar = Bar("Volume:", bar_total_length, 10, True)
 
-    bar = MultiBar([bass_bar, mid_bar, treble_bar])
-    bar.show([bass, mid, treble], get_console_width())
+    bar = MultiBar([bass_bar, mid_bar, treble_bar, volume_bar])
+    bar.show([*percents], get_console_width())
 
 
-def compute_percent(band_magnitudes, max_val=160, use_db=False, min_db=-40, max_db=0):
+def compute_percent(band_magnitudes: np.ndarray, min_db=-40, max_db=0) -> float:
     avg_mag = np.mean(band_magnitudes)
-    if use_db:
-        eps = 1e-10
-        db = 20 * np.log10(avg_mag + eps)
-        percent = (db - min_db) / (max_db - min_db)
-    else:
-        percent = avg_mag / max_val
+    eps = 1e-10
+    db: float = 20 * np.log10(avg_mag + eps)
+    percent = (db - min_db) / (max_db - min_db)
+    return np.clip(percent, 0, 1)
+
+
+def volume_db(samples: np.ndarray, min_db=-40, max_db=0) -> float:
+    rms = np.sqrt(np.mean(samples**2))  # AI
+    eps = 1e-10
+    db = 20 * np.log10(rms + eps)
+    percent = (db - min_db) / (max_db - min_db)
     return np.clip(percent, 0, 1)
 
 
@@ -102,10 +109,9 @@ def get_console_width():
         return 80
 
 
-def compute_spectrum(stream: Stream, curr_bass, curr_mid, curr_treble):
-    spectrum = get_spectrum(
-        stream.mononize(stream.raw_to_float(stream.get())), stream.sample_rate
-    )
+def compute_spectrum(stream: Stream, curr_bass, curr_mid, curr_treble, curr_volume):
+    audio = stream.mononize(stream.raw_to_float(stream.get()))
+    spectrum = get_spectrum(audio, stream.sample_rate)
     # Get spectrum for each of the three ranges
     bass = spectrum[
         (spectrum[:, 0] >= bass_range[0]) & (spectrum[:, 0] <= bass_range[1])
@@ -118,21 +124,23 @@ def compute_spectrum(stream: Stream, curr_bass, curr_mid, curr_treble):
     # Compute their percents
     bass_percent = compute_percent(
         bass[:, 1],
-        use_db=True,
-        min_db=bass_db_range[0],
-        max_db=bass_db_range[1],
+        bass_db_range[0],
+        bass_db_range[1],
     )
     mid_percent = compute_percent(
         mid[:, 1],
-        use_db=True,
-        min_db=mid_db_range[0],
-        max_db=mid_db_range[1],
+        mid_db_range[0],
+        mid_db_range[1],
     )
     treble_percent = compute_percent(
         treble[:, 1],
-        use_db=True,
-        min_db=treble_db_range[0],
-        max_db=treble_db_range[1],
+        treble_db_range[0],
+        treble_db_range[1],
+    )
+    volume_percent = volume_db(
+        audio,
+        volume_db_range[0],
+        volume_db_range[1],
     )
 
     # Apply decay
@@ -140,6 +148,7 @@ def compute_spectrum(stream: Stream, curr_bass, curr_mid, curr_treble):
         apply_decay(curr_bass, bass_percent, decay=decay),
         apply_decay(curr_mid, mid_percent, decay=decay),
         apply_decay(curr_treble, treble_percent, decay=decay),
+        apply_decay(curr_volume, volume_percent, decay=decay),
     )
     return new_values
 
@@ -172,6 +181,7 @@ def main():
     curr_bass = 0
     curr_mid = 0
     curr_treble = 0
+    curr_volume = 0
 
     # new_info_freq in Frames. Smaller value = more frequent updates, but more potential stutters
     # Also note that the higher this is set, the more lag there before song_start is updated
@@ -208,11 +218,8 @@ def main():
                 print("\033c", end="")
             # Process audio
 
-            curr_bass, curr_mid, curr_treble = compute_spectrum(
-                stream,
-                curr_bass,
-                curr_mid,
-                curr_treble,
+            curr_bass, curr_mid, curr_treble, curr_volume = compute_spectrum(
+                stream, curr_bass, curr_mid, curr_treble, curr_volume
             )
 
             curr_time = time()
@@ -236,7 +243,9 @@ def main():
             if display_lyrics:
                 print(f"Lyrics: {lyric_to_display}".ljust(get_console_width()))
                 print("-" * get_console_width())
-            update_bars(curr_bass * 100, curr_mid * 100, curr_treble * 100)
+            update_bars(
+                curr_bass * 100, curr_mid * 100, curr_treble * 100, curr_volume * 100
+            )
             print(f"\x1b[{ascii_size}A", end="")  # Move cursor up to redraw
             print(f"\x1b[{ascii_size}A", end="")  # Move cursor up to redraw
 
