@@ -216,7 +216,9 @@ def main():
             print("-" * get_console_width())
             if display_lyrics:
                 print(f"Lyrics: {lyric_to_display}".ljust(get_console_width()))
-                print(f"{int(curr_time - song_start)}")
+                print(
+                    f"Time: {int(curr_time - song_start)//60}m {int(curr_time - song_start)%60}s"
+                )
                 print("-" * get_console_width())
             update_bars(
                 bass_setting.curr * 100,
@@ -224,6 +226,8 @@ def main():
                 treble_setting.curr * 100,
                 volume_setting.curr * 100,
             )
+            print(f"\x1b[{len(bar.bars)}B", end="")  # Move cursor down to add Line
+            print("-" * get_console_width())
             print(f"\x1b[{ascii_size}A", end="")  # Move cursor up to redraw
             print(f"\x1b[{ascii_size}A", end="")  # Move cursor up to redraw
 
