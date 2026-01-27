@@ -191,9 +191,7 @@ def main():
     # Lyrics
     lyric_to_display = ""
     if display_lyrics:
-        lyrics = Lyrics(
-            title, "" if artist == "Unknown artist" or artist in title else artist
-        )
+        lyrics = Lyrics(title, "")
         lyrics.retrieve()
 
     # Get thumbnail
@@ -245,10 +243,7 @@ def main():
                 if display_lyrics:
                     lyric_to_display = ""
                     artist = artist.replace("- Topic", "").strip()
-                    lyrics = Lyrics(
-                        title,
-                        "" if artist == "Unknown artist" or artist in title else artist,
-                    )
+                    lyrics = Lyrics(title, "")
                     lyrics.retrieve()
                 song_start = time()
                 curr_time = 0
