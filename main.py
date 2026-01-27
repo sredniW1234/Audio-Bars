@@ -7,6 +7,7 @@ from ascii import AsciiImage
 from asyncio import run
 from time import time
 import numpy as np
+import threading
 import os
 
 """
@@ -50,23 +51,36 @@ ascii_square: bool = False  # Doesn't look quiet correct yet, but square enough 
 # Lyrics:
 display_lyrics = True
 
+global_info = {
+    "title": "",
+    "artist": "",
+    "player": "",
+    "playback_state": "",
+}
+info_lock = threading.Lock()
 
-async def get_info(playing: NowPlaying) -> dict:
+
+def get_info(playing: NowPlaying):
+    global global_info
     session = playing._manager.get_current_session()
     # for session in sessions:
     if session:
         model_id = session.source_app_user_model_id
-        info = await playing.get_now_playing(model_id) or {}
+        info = run(playing.get_now_playing(model_id)) or {}
         info["player"] = model_id
         playback = session.get_playback_info()
         info["playback_state"] = str(playback.playback_status) if playback else "4"
-        return info
-    return {
-        "title": "",
-        "artist": "",
-        "player": "",
-        "playback_state": "",
-    }
+        with info_lock:
+            global_info = info
+        return
+    with info_lock:
+        global_info = {
+            "title": "",
+            "artist": "",
+            "player": "",
+            "playback_state": "",
+        }
+    return
 
 
 bass_bar = Bar("Bass:", bar_total_length, 10, True)
@@ -166,9 +180,13 @@ def main():
     run(playing.initalize_mediamanger())
     playing.get_active_app_user_model_ids
     # Get initial info
-    info = run(get_info(playing))
-    title = info["title"] if info else "No song playing"
-    artist = info["artist"] if info else "Unknown artist"
+    info_thread = threading.Thread(target=lambda: get_info(playing), daemon=True)
+    info_thread.start()
+    with info_lock:
+        title = global_info["title"] if global_info else "No song playing"
+        artist = global_info["artist"] if global_info else "Unknown artist"
+        player = global_info["player"]
+        playback_state = global_info["playback_state"]
 
     # Lyrics
     lyric_to_display = ""
@@ -180,7 +198,7 @@ def main():
 
     # Get thumbnail
     thumbnail = Thumbnail()
-    thumbnail.get(title, info["player"])
+    thumbnail.get(title, player)
     ascii_image = AsciiImage("thumbnail.png")
     # return
     # Initialize audio stream
@@ -208,14 +226,21 @@ def main():
             frames_passed += 1
             if frames_passed >= new_info_freq:
                 frames_passed = 0
-                info = run(get_info(playing))
-            new_title = info["title"] if info else "No song playing"
-            artist = info["artist"] if info else "Unknown artist"
+                if not info_thread.is_alive():
+                    info_thread = threading.Thread(
+                        target=lambda: get_info(playing), daemon=True
+                    )
+                    info_thread.start()
+            with info_lock:
+                new_title = global_info["title"] if global_info else "No song playing"
+                artist = global_info["artist"] if global_info else "Unknown artist"
+                player = global_info["player"]
+                playback_state = global_info["playback_state"]
 
             # Update thumbnail if title changed
             if new_title != title:
                 title = new_title
-                thumbnail.get(title, info["player"])
+                thumbnail.get(title, player)
 
                 if display_lyrics:
                     lyric_to_display = ""
@@ -235,7 +260,7 @@ def main():
 
             curr_time = int(time() - song_start)
 
-            if info["playback_state"] != "4":  # Not playing
+            if playback_state != "4":  # Not playing
                 if paused_at == 0:
                     paused_at = curr_time  # Make sure they're synced
                 curr_time = paused_at
