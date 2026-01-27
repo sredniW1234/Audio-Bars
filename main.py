@@ -32,12 +32,12 @@ bar_total_length: int = 40  # Characters
 
 # Spectrum:
 bass_range: tuple = (20, 250)  # freq in hz
-mid_range: tuple = (200, 4500)
-treble_range: tuple = (4000, 20000)
+mid_range: tuple = (200, 3500)
+treble_range: tuple = (3000, 20000)
 
 bass_db_range: tuple = (-40, 40)  # minimum, maximum
 mid_db_range: tuple = (-40, 20)
-treble_db_range: tuple = (-50, 10)
+treble_db_range: tuple = (-60, 5)
 volume_db_range: tuple = (-70, -10)
 
 decay: float = 0.3
