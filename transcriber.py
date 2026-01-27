@@ -67,16 +67,18 @@ class Lyrics:
         if lyrics == "":
             return {-1: "No Lyrics Available."}
         for line in lyrics.splitlines():
-            time = line[:11]
+            time = line[:11].strip()
+            if len(line) < 2 or not line[1].isnumeric():
+                continue
             if time[-1] != "]":
                 # Hours
-                time = line[:14]
+                time = line[:14].strip()
                 if time[-1] != "]":
                     # Just return bc who has a video thats more than xx hours long?
                     return {}
-                time = time[1:13]
+                time = time[1:12].strip()
             else:
-                time = time[1:10]
+                time = time[1:9].strip()
             timed_lyrics[self._lrc_time_to_seconds(time)] = line[11:]
 
         return timed_lyrics
@@ -88,8 +90,8 @@ class Lyrics:
                 self.timed_lyrics = lyrics
             print("\033c", end="")  # In case of error, clear console
 
-        thread = threading.Thread(target=get)
-        thread.start()
+        self.thread = threading.Thread(target=get)
+        self.thread.start()
 
     def get_lyric(self, time: int):
         if self.timed_lyrics.get(-1):
