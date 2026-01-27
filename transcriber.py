@@ -8,6 +8,34 @@ class Lyrics:
         self.artist = artist
         self.timed_lyrics = {}
         self.lock = threading.Lock()
+        self.clean_title()
+
+    def clean_title(self) -> str:
+        title = self.title
+        terms = [
+            "official lyrics video",
+            "official cover video",
+            "official lyric video",
+            "official music video",
+            "official video",
+            "official audio",
+            "official amv",
+            "lyrics video",
+            "lyric video",
+            "visualizer",
+            "remastered",
+            "remaster",
+            "lyrics",
+            "lyric",
+            "cover",
+            "cc",
+        ]
+        surrounding = ["[]", "()", "{}"]
+        for outer in surrounding:
+            for term in terms:
+                title = title.lower().replace(outer[0] + term + outer[1], "").strip()
+        self.title = title
+        return self.title
 
     def search(self) -> str:
         lyrics = sl.search(
