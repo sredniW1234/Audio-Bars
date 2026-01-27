@@ -10,14 +10,19 @@ class AsciiImage:
     Simple class to convert an image to colored ASCII art in the terminal.
     """
 
-    def __init__(self, image_path: str) -> None:
+    def __init__(self, image: str | Image.Image) -> None:
         """
         Simple class to convert an image to colored ASCII art in the terminal.
 
         :param image_path: The path to the image file.
         :type image_path: str
         """
-        self.image_path = image_path
+        self.image = None
+        self.image_path = None
+        if isinstance(image, Image.Image):
+            self.Image = image
+        else:
+            self.image_path = image
         self.characters = " `.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@"
         init(autoreset=True)
 
@@ -62,9 +67,12 @@ class AsciiImage:
 
         :param width: The desired width of the ASCII art.
         """
-        if not exists(self.image_path):
+        if self.image_path and not exists(self.image_path):
             return
-        img = Image.open(self.image_path)
+        elif not self.image:
+            return
+
+        img = Image.open(self.image_path) if self.image_path else self.image
         img = self.format_image(img, width, width if square else -1)
         g_img = img.convert("L")  # Grayscale
         for y in range(g_img.height):
@@ -85,9 +93,12 @@ class AsciiImage:
 
         :param width: The desired width of the ASCII art.
         """
-        if not exists(self.image_path):
+        if self.image_path and not exists(self.image_path):
             return []
-        img = Image.open(self.image_path)
+        elif not self.image:
+            return []
+
+        img = Image.open(self.image_path) if self.image_path else self.image
         img = self.format_image(img, width, width if square else -1)
         g_img = img.convert("L")  # Grayscale
         image_str = []
