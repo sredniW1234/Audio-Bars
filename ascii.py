@@ -67,10 +67,8 @@ class AsciiImage:
 
         :param width: The desired width of the ASCII art.
         """
-        if self.image_path and not exists(self.image_path):
-            return
-        elif not self.image:
-            return
+        if self.image_path and not exists(self.image_path) and not self.image:
+            return []
 
         img = Image.open(self.image_path) if self.image_path else self.image
         img = self.format_image(img, width, width if square else -1)
@@ -93,9 +91,7 @@ class AsciiImage:
 
         :param width: The desired width of the ASCII art.
         """
-        if self.image_path and not exists(self.image_path):
-            return []
-        elif not self.image:
+        if self.image_path and not exists(self.image_path) and not self.image:
             return []
 
         img = Image.open(self.image_path) if self.image_path else self.image
