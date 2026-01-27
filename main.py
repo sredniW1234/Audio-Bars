@@ -1,6 +1,6 @@
-from thumbnail import fetch_thumbnail, save_thumbnail
 from audio import Stream, get_spectrum
 from py_now_playing import NowPlaying
+from thumbnail import Thumbnail
 from transcriber import Lyrics
 from bar import Bar, MultiBar
 from ascii import AsciiImage
@@ -178,8 +178,8 @@ def main():
         lyrics.retrieve()
 
     # Get thumbnail
-    thumbnail_url = fetch_thumbnail(title, info["player"])
-    save_thumbnail(thumbnail_url, "thumbnail.png")
+    thumbnail = Thumbnail()
+    thumbnail.get(title, info["player"])
     ascii_image = AsciiImage("thumbnail.png")
     # return
     # Initialize audio stream
@@ -214,10 +214,8 @@ def main():
             # Update thumbnail if title changed
             if new_title != title:
                 title = new_title
-                song_start = time()
-                curr_time = 0
-                thumbnail_url = fetch_thumbnail(title, info["player"])
-                save_thumbnail(thumbnail_url, "thumbnail.png")
+                thumbnail.get(title, info["player"])
+
                 if display_lyrics:
                     lyric_to_display = ""
                     artist = artist.replace("- Topic", "").strip()
@@ -238,6 +236,7 @@ def main():
             if info["playback_state"] != "4":  # Not playing
                 if paused_at == 0:
                     paused_at = curr_time  # Make sure they're synced
+                curr_time = paused_at
             else:
                 if paused_at != 0:  # Reset curr_time to what it was previously
                     song_start += int(curr_time - paused_at)
@@ -262,6 +261,7 @@ def main():
             print("-" * get_console_width())
             if display_lyrics:
                 print(f"Lyrics: {lyric_to_display}".ljust(get_console_width()))
+                print(f"{curr_time}")
                 print("-" * get_console_width())
             update_bars(
                 curr_bass * 100, curr_mid * 100, curr_treble * 100, curr_volume * 100
