@@ -43,7 +43,7 @@ volume_db_range: tuple = (-70, -10)
 decay: float = 0.3
 
 # Ascii:
-ascii_art = False
+ascii_art = True
 colored_ascii = True
 ascii_size: int = 60
 ascii_square: bool = False  # Doesn't look quiet correct yet, but square enough /shrug
@@ -172,7 +172,9 @@ def main():
     # Lyrics
     lyric_to_display = ""
     if display_lyrics:
-        lyrics = Lyrics(title, "")
+        lyrics = Lyrics(
+            title, "" if artist == "Unknown artist" or artist in title else artist
+        )
         lyrics.retrieve()
 
     # Get thumbnail
@@ -218,7 +220,11 @@ def main():
                 save_thumbnail(thumbnail_url, "thumbnail.png")
                 if display_lyrics:
                     lyric_to_display = ""
-                    lyrics = Lyrics(title, "")
+                    artist = artist.replace("- Topic", "").strip()
+                    lyrics = Lyrics(
+                        title,
+                        "" if artist == "Unknown artist" or artist in title else artist,
+                    )
                     lyrics.retrieve()
                 print("\033c", end="")
             # Process audio
@@ -251,7 +257,8 @@ def main():
                     print(line, end="")
 
             print("-" * get_console_width())
-            print(f"{title} - {artist}".ljust(get_console_width()))
+            print(f"Title: {title}".ljust(get_console_width()))
+            print(f"Artist: {artist}".ljust(get_console_width()))
             print("-" * get_console_width())
             if display_lyrics:
                 print(f"Lyrics: {lyric_to_display}".ljust(get_console_width()))
