@@ -2,6 +2,7 @@ from PIL import Image
 from PIL import ImageFilter
 import numpy as np
 from colorama import init, Fore
+from os.path import exists
 
 
 class AsciiImage:
@@ -61,6 +62,8 @@ class AsciiImage:
 
         :param width: The desired width of the ASCII art.
         """
+        if not exists(self.image_path):
+            return
         img = Image.open(self.image_path)
         img = self.format_image(img, width, width if square else -1)
         g_img = img.convert("L")  # Grayscale
@@ -76,12 +79,14 @@ class AsciiImage:
                 print(self.characters[pixel], end="" + Fore.RESET)
             print()
 
-    def ascii_image_str(self, width, square: bool, colored=False) -> list:
+    def ascii_image_str(self, width, square: bool, colored=False) -> list[str]:
         """
         Returns the ASCII art as a list of strings.
 
         :param width: The desired width of the ASCII art.
         """
+        if not exists(self.image_path):
+            return []
         img = Image.open(self.image_path)
         img = self.format_image(img, width, width if square else -1)
         g_img = img.convert("L")  # Grayscale
