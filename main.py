@@ -5,7 +5,6 @@ from transcriber import Lyrics
 from bar import Bar, MultiBar
 from ascii import AsciiImage
 from asyncio import run
-from math import floor
 from time import time
 import numpy as np
 import os
@@ -70,13 +69,15 @@ async def get_info(playing: NowPlaying) -> dict:
     }
 
 
-def update_bars(*percents):
-    bass_bar = Bar("Bass:", bar_total_length, 10, True)
-    mid_bar = Bar("Mid:", bar_total_length, 10, True)
-    treble_bar = Bar("Treble:", bar_total_length, 10, True)
-    volume_bar = Bar("Volume:", bar_total_length, 10, True)
+bass_bar = Bar("Bass:", bar_total_length, 10, True)
+mid_bar = Bar("Mid:", bar_total_length, 10, True)
+treble_bar = Bar("Treble:", bar_total_length, 10, True)
+volume_bar = Bar("Volume:", bar_total_length, 10, True)
 
-    bar = MultiBar([bass_bar, mid_bar, treble_bar, volume_bar])
+bar = MultiBar([bass_bar, mid_bar, treble_bar, volume_bar])
+
+
+def update_bars(*percents):
     bar.show([*percents], get_console_width())
 
 
@@ -224,8 +225,9 @@ def main():
                         "" if artist == "Unknown artist" or artist in title else artist,
                     )
                     lyrics.retrieve()
-                print("\033c", end="")
-            # Process audio
+                song_start = time()
+                curr_time = 0
+                # Process audio
 
             curr_bass, curr_mid, curr_treble, curr_volume = compute_spectrum(
                 stream, curr_bass, curr_mid, curr_treble, curr_volume
