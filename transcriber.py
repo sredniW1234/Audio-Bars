@@ -41,6 +41,7 @@ class Lyrics:
         lyrics = sl.search(
             search_term=f"{self.title} {self.artist}",
             synced_only=True,
+            providers=["Lrclib", "Musixmatch", "AZLyrics"],
         )
         return lyrics or ""
 
