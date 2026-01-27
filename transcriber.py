@@ -19,6 +19,7 @@ class Lyrics:
             "official music video",
             "official video",
             "official audio",
+            "english cover",
             "official amv",
             "lyrics video",
             "lyric video",
