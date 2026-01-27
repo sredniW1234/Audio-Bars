@@ -21,7 +21,6 @@ Note: Some code was generated with the help of ChatGPT. Though I have modified i
 # TODO: Fine tune db_range settings  --Partially done. Needs more though.
 # TODO: Add command line arguments for settings
 # TODO: Make bars more visually appealing
-# TODO: Make Title print more pretty
 # Done: Make Icon for exe
 # Installer command:
 # pyinstaller --onefile --console --icon=icon.ico main.py
@@ -222,7 +221,9 @@ def main():
             if display_lyrics:
                 print(f"Lyrics: {lyric_to_display}".ljust(get_console_width()))
                 print(
-                    f"Time: {int(curr_time - song_start)//60}m {int(curr_time - song_start)%60}s"
+                    f"Time: {int(curr_time - song_start)//60}m {int(curr_time - song_start)%60}s".ljust(
+                        get_console_width()
+                    )
                 )
                 print("-" * get_console_width())
             update_bars(
