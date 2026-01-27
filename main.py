@@ -18,7 +18,7 @@ Note: Some code was generated with the help of ChatGPT. Though I have modified i
 # TODO: Improve ASCII art aspect ratio handling
 # TODO: Don't download thumbnail and only get the PIL image in memory
 # TODO: Add volume bar
-# TODO: Fine tune db_range settings
+# TODO: Fine tune db_range settings  --Partially done. Needs more though.
 # TODO: Add command line arguments for settings
 # TODO: Make bars more visually appealing
 # TODO: Make Title print more pretty
@@ -34,10 +34,10 @@ mid_range: tuple = (200, 4500)
 treble_range: tuple = (4000, 20000)
 
 bass_db_range: tuple = (-40, 40)  # minimum, maximum
-mid_db_range: tuple = (-40, 40)
-treble_db_range: tuple = (-40, 20)
+mid_db_range: tuple = (-40, 20)
+treble_db_range: tuple = (-50, 10)
 
-decay: float = 0.1
+decay: float = 0.3
 
 # Ascii:
 ascii_art = True
