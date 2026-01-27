@@ -1,4 +1,4 @@
-from audio import Stream, get_spectrum
+from audio import Stream, BandSetting, compute_spectrum
 from py_now_playing import NowPlaying
 from thumbnail import Thumbnail
 from transcriber import Lyrics
@@ -95,84 +95,12 @@ def update_bars(*percents):
     bar.show([*percents], get_console_width())
 
 
-def compute_percent(band_magnitudes: np.ndarray, min_db=-40, max_db=0) -> float:
-    avg_mag = np.mean(band_magnitudes)
-    eps = 1e-10
-    db: float = 20 * np.log10(avg_mag + eps)
-    percent = (db - min_db) / (max_db - min_db)
-    return np.clip(percent, 0, 1)
-
-
-def volume_db(samples: np.ndarray, min_db=-40, max_db=0) -> float:
-    rms = np.sqrt(np.mean(samples**2))  # AI
-    eps = 1e-10
-    db = 20 * np.log10(rms + eps)
-    percent = (db - min_db) / (max_db - min_db)
-    return np.clip(percent, 0, 1)
-
-
-def apply_decay(prev, current, decay=0.05):
-    if current >= prev:
-        # rising signal: jump instantly
-        return current
-    else:
-        # falling signal: decay gradually
-        return prev * (1 - decay) + current * decay
-
-
 def get_console_width():
     try:
         size = os.get_terminal_size()
         return size.columns
     except OSError:
         return 80
-
-
-def compute_spectrum(stream: Stream, curr_bass, curr_mid, curr_treble, curr_volume):
-    audio = stream.mononize(stream.raw_to_float(stream.get()))
-    spectrum = get_spectrum(audio, stream.sample_rate)
-    # Get spectrum for each of the three ranges
-    bass = spectrum[
-        (spectrum[:, 0] >= bass_range[0]) & (spectrum[:, 0] <= bass_range[1])
-    ]
-    mid = spectrum[(spectrum[:, 0] >= mid_range[0]) & (spectrum[:, 0] <= mid_range[1])]
-    treble = spectrum[
-        (spectrum[:, 0] >= treble_range[0]) & (spectrum[:, 0] <= treble_range[1])
-    ]
-
-    # Compute their percents
-    bass_percent = compute_percent(
-        bass[:, 1],
-        bass_db_range[0],
-        bass_db_range[1],
-    )
-    mid_percent = compute_percent(
-        mid[:, 1],
-        mid_db_range[0],
-        mid_db_range[1],
-    )
-    treble_percent = compute_percent(
-        treble[:, 1],
-        treble_db_range[0],
-        treble_db_range[1],
-    )
-    volume_percent = volume_db(
-        audio,
-        volume_db_range[0],
-        volume_db_range[1],
-    )
-
-    # Apply decay
-    new_values = (
-        apply_decay(curr_bass, bass_percent, decay=decay),
-        apply_decay(curr_mid, mid_percent, decay=decay),
-        apply_decay(curr_treble, treble_percent, decay=decay),
-        apply_decay(curr_volume, volume_percent, decay=decay),
-    )
-    return new_values
-
-
-# def retrieve_lyrics(title, artist):
 
 
 def main():
@@ -201,10 +129,10 @@ def main():
     # return
     # Initialize audio stream
     stream = Stream()
-    curr_bass = 0
-    curr_mid = 0
-    curr_treble = 0
-    curr_volume = 0
+    bass_setting = BandSetting(bass_range, bass_db_range)
+    mid_setting = BandSetting(mid_range, mid_db_range)
+    treble_setting = BandSetting(treble_range, treble_db_range)
+    volume_setting = BandSetting((0, 0), volume_db_range)
 
     # new_info_freq in Frames. Smaller value = more frequent updates, but more potential stutters
     # Also note that the higher this is set, the more lag there before song_start is updated
@@ -249,8 +177,13 @@ def main():
                 curr_time = 0
                 # Process audio
 
-            curr_bass, curr_mid, curr_treble, curr_volume = compute_spectrum(
-                stream, curr_bass, curr_mid, curr_treble, curr_volume
+            (
+                bass_setting.curr,
+                mid_setting.curr,
+                treble_setting.curr,
+                volume_setting.curr,
+            ) = compute_spectrum(
+                stream, bass_setting, mid_setting, treble_setting, volume_setting, decay
             )
 
             curr_time = monotonic()
@@ -286,7 +219,10 @@ def main():
                 print(f"{int(curr_time - song_start)}")
                 print("-" * get_console_width())
             update_bars(
-                curr_bass * 100, curr_mid * 100, curr_treble * 100, curr_volume * 100
+                bass_setting.curr * 100,
+                mid_setting.curr * 100,
+                treble_setting.curr * 100,
+                volume_setting.curr * 100,
             )
             print(f"\x1b[{ascii_size}A", end="")  # Move cursor up to redraw
             print(f"\x1b[{ascii_size}A", end="")  # Move cursor up to redraw

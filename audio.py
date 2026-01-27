@@ -119,6 +119,19 @@ class Stream:
         self.p.terminate()
 
 
+class BandSetting:
+    def __init__(
+        self,
+        freq_range: tuple[int, int],
+        db_range: tuple[int, int] = (-40, 40),
+    ) -> None:
+        self.curr: float = 0
+        self.low_freq = freq_range[0]
+        self.high_freq = freq_range[1]
+        self.low_db = db_range[0]
+        self.high_db = db_range[1]
+
+
 def get_spectrum(audio: np.ndarray, sample_rate: int) -> np.ndarray:
     """
     Retrieves the frequency spectrum of the given audio data using FFT.
@@ -143,6 +156,87 @@ def get_spectrum(audio: np.ndarray, sample_rate: int) -> np.ndarray:
 
     spectrum = np.column_stack((freqs, magnitude))
     return spectrum
+
+
+def compute_percent(band_magnitudes: np.ndarray, min_db=-40, max_db=0) -> float:
+    avg_mag = np.mean(band_magnitudes)
+    eps = 1e-10
+    db: float = 20 * np.log10(avg_mag + eps)
+    percent = (db - min_db) / (max_db - min_db)
+    return np.clip(percent, 0, 1)
+
+
+def volume_db(samples: np.ndarray, min_db=-40, max_db=0) -> float:
+    rms = np.sqrt(np.mean(samples**2))  # AI
+    eps = 1e-10
+    db = 20 * np.log10(rms + eps)
+    percent = (db - min_db) / (max_db - min_db)
+    return np.clip(percent, 0, 1)
+
+
+def apply_decay(prev, current: float, decay=0.05) -> float:
+    if current >= prev:
+        # rising signal: jump instantly
+        return current
+    else:
+        # falling signal: decay gradually
+        return prev * (1 - decay) + current * decay
+
+
+def compute_spectrum(
+    stream: Stream,
+    bass_setting: BandSetting,
+    mid_setting: BandSetting,
+    treble_setting: BandSetting,
+    volume_setting: BandSetting,
+    decay: float = 0.1,
+):
+    audio = stream.mononize(stream.raw_to_float(stream.get()))
+    spectrum = get_spectrum(audio, stream.sample_rate)
+    # Get spectrum for each of the three ranges
+    bass = spectrum[
+        (spectrum[:, 0] >= bass_setting.low_freq)
+        & (spectrum[:, 0] <= bass_setting.high_freq)
+    ]
+    mid = spectrum[
+        (spectrum[:, 0] >= mid_setting.low_freq)
+        & (spectrum[:, 0] <= mid_setting.high_freq)
+    ]
+    treble = spectrum[
+        (spectrum[:, 0] >= treble_setting.low_freq)
+        & (spectrum[:, 0] <= treble_setting.high_freq)
+    ]
+
+    # Compute their percents
+    bass_percent = compute_percent(
+        bass[:, 1],
+        bass_setting.low_db,
+        bass_setting.high_db,
+    )
+    mid_percent = compute_percent(
+        mid[:, 1],
+        mid_setting.low_db,
+        mid_setting.high_db,
+    )
+    treble_percent = compute_percent(
+        treble[:, 1],
+        treble_setting.low_db,
+        treble_setting.high_db,
+    )
+    volume_percent = volume_db(
+        audio,
+        volume_setting.low_db,
+        volume_setting.high_db,
+    )
+
+    # Apply decay
+    new_values = (
+        apply_decay(bass_setting.curr, bass_percent, decay=decay),
+        apply_decay(mid_setting.curr, mid_percent, decay=decay),
+        apply_decay(treble_setting.curr, treble_percent, decay=decay),
+        apply_decay(volume_setting.curr, volume_percent, decay=decay),
+    )
+    return new_values
 
 
 # def download_vid(title):
