@@ -5,7 +5,7 @@ from transcriber import Lyrics
 from bar import Bar, MultiBar
 from ascii import AsciiImage
 from asyncio import run
-from time import time
+from time import monotonic
 import numpy as np
 import threading
 import os
@@ -210,7 +210,7 @@ def main():
     # Also note that the higher this is set, the more lag there before song_start is updated
     new_info_freq = 0
     frames_passed = 0
-    song_start = time()
+    song_start = monotonic()
     curr_time = 0
     paused_at = 0
 
@@ -245,7 +245,7 @@ def main():
                     artist = artist.replace("- Topic", "").strip()
                     lyrics = Lyrics(title, "")
                     lyrics.retrieve()
-                song_start = time()
+                song_start = monotonic()
                 curr_time = 0
                 # Process audio
 
@@ -253,11 +253,11 @@ def main():
                 stream, curr_bass, curr_mid, curr_treble, curr_volume
             )
 
-            curr_time = int(time() - song_start)
+            curr_time = monotonic()
 
             if playback_state != "4":  # Not playing
                 if paused_at == 0:
-                    paused_at = curr_time  # Make sure they're synced
+                    paused_at = 0  # Make sure they're synced
                 curr_time = paused_at
             else:
                 if paused_at != 0:  # Reset curr_time to what it was previously
@@ -266,7 +266,7 @@ def main():
 
             # Get lyrics
             if display_lyrics:
-                lyric_time = curr_time
+                lyric_time = int(curr_time - song_start)
                 if lyrics.get_lyric(lyric_time):
                     lyric_to_display = lyrics.get_lyric(lyric_time)
 
@@ -283,7 +283,7 @@ def main():
             print("-" * get_console_width())
             if display_lyrics:
                 print(f"Lyrics: {lyric_to_display}".ljust(get_console_width()))
-                print(f"{curr_time}")
+                print(f"{int(curr_time - song_start)}")
                 print("-" * get_console_width())
             update_bars(
                 curr_bass * 100, curr_mid * 100, curr_treble * 100, curr_volume * 100
