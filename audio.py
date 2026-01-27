@@ -1,6 +1,9 @@
 import pyaudiowpatch as pyaudio
-import threading
 import numpy as np
+import threading
+import rapidfuzz
+import yt_dlp
+import os
 
 
 class Stream:
@@ -140,3 +143,33 @@ def get_spectrum(audio: np.ndarray, sample_rate: int) -> np.ndarray:
 
     spectrum = np.column_stack((freqs, magnitude))
     return spectrum
+
+
+# def download_vid(title):
+#     ydl_opts = {
+#         "format": "bestaudio/best",  # downloads best video and audio and merges them
+#         "outtmpl": os.path.join(
+#             "./", "audio"
+#         ),  # output template: "downloads/Video Title.ext"
+#         "noplaylist": True,  # ensures only the single video is downloaded if a playlist URL is provided
+#         "quiet": True,
+#         "postprocessors": [
+#             {
+#                 "key": "FFmpegExtractAudio",  # Key for audio extraction
+#                 "preferredcodec": "mp3",  # Preferred output format (mp3, wav, aac, etc.)
+#                 "preferredquality": "192",  # Audio quality (64 to 320)
+#             }
+#         ],
+#     }
+#     try:
+#         with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type:ignore
+#             info = ydl.extract_info(f"ytsearch1:{title}", download=False)
+#             info = info["entries"][0]  # type:ignore
+#             if (
+#                 1 - rapidfuzz.distance.DamerauLevenshtein.distance(title, info["title"])
+#                 > 0.85
+#             ):
+#                 ydl.download(info["webpage_url"])
+#         # print(f"\nSuccessfully downloaded: {video_url}")
+#     except Exception as e:
+#         print(f"\nAn error occurred: {e}")
