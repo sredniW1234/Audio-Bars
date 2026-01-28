@@ -1,7 +1,7 @@
 from audio import Stream, BandSetting, compute_spectrum
 from py_now_playing import NowPlaying
 from thumbnail import Thumbnail
-from transcriber import Lyrics
+from transcriber import LyricManager
 from bar import Bar, MultiBar
 from ascii import AsciiImage
 from asyncio import run
@@ -118,14 +118,15 @@ def main():
     # Lyrics
     lyric_to_display = ""
     if display_lyrics:
-        lyrics = Lyrics(title, "")
-        lyrics.retrieve()
+        lyric_manager = LyricManager(title, "")
+        lyric_manager.retrieve()
 
     # Get thumbnail
     thumbnail = Thumbnail()
-    thumbnail.save_thumbnail(
-        thumbnail_url=thumbnail.fetch_thumbnail(title, player), filename="thumbnail.png"
-    )
+    # thumbnail.save_thumbnail(
+    #     thumbnail_url=thumbnail.fetch_thumbnail(title, player), filename="thumbnail.png"
+    # )
+    thumbnail.get_thumbnail(title, player)
     ascii_image = AsciiImage("thumbnail.png")
     # return
     # Initialize audio stream
@@ -167,16 +168,13 @@ def main():
             # Update thumbnail if title changed
             if new_title != title:
                 title = new_title
-                thumbnail.save_thumbnail(
-                    thumbnail_url=thumbnail.fetch_thumbnail(title, player),
-                    filename="thumbnail.png",
-                )
+                thumbnail.get_thumbnail(artist, player)
 
                 if display_lyrics:
                     lyric_to_display = ""
-                    artist = artist.replace("- Topic", "").strip()
-                    lyrics = Lyrics(title, "")
-                    lyrics.retrieve()
+                    lyric_manager.title = title
+                    lyric_manager.artist = artist
+                    lyric_manager.retrieve()
                 song_start = monotonic()
                 curr_time = 0
                 # Process audio
@@ -204,8 +202,8 @@ def main():
             # Get lyrics
             if display_lyrics:
                 lyric_time = int(curr_time - song_start)
-                if lyrics.get_lyric(lyric_time):
-                    lyric_to_display = lyrics.get_lyric(lyric_time)
+                if lyric_manager.get_lyric(lyric_time):
+                    lyric_to_display = lyric_manager.get_lyric(lyric_time)
 
             # Display
             if ascii_art:

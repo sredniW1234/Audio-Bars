@@ -5,8 +5,9 @@ import threading
 class Thumbnail:
     def __init__(self) -> None:
         self.lock = threading.Lock()
+        self._stop_event = threading.Event()
 
-    def fetch_thumbnail(self, title: str, player: str) -> str:
+    def _fetch_thumbnail(self, title: str, player: str) -> str:
         """Fetches the thumbnail URL from YouTube based on the title and player name."""
 
         # Check if the player is a browser
@@ -23,7 +24,7 @@ class Thumbnail:
             print("Error fetching thumbnail:", str(e))
             return ""
 
-    def save_thumbnail(self, thumbnail_url: str, filename: str):
+    def _save_thumbnail(self, thumbnail_url: str, filename: str):
         """Saves the thumbnail image to a file."""
         if thumbnail_url == "":
             return
@@ -32,3 +33,18 @@ class Thumbnail:
         # urllib.urlretrieve(self.url, filePath)
         with open(filename, "wb") as localFile:
             localFile.write(pic.read())
+
+    def get_thumbnail(self, title: str, player: str) -> None:
+        def _get(title: str, player: str, event: threading.Event):
+            url = self._fetch_thumbnail(title, player)
+            if event.is_set():
+                return
+            self._save_thumbnail(url, "thumbnail.png")
+
+        self._stop_event.set()
+        self._stop_event = threading.Event()
+        event = self._stop_event
+        self.thread = threading.Thread(
+            target=_get, args=[title, player, event], daemon=True
+        )
+        self.thread.start()

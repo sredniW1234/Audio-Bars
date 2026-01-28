@@ -1,16 +1,18 @@
 import syncedlyrics as sl
 import threading
+import time
 
 
-class Lyrics:
+class LyricManager:
     def __init__(self, title: str, artist: str) -> None:
         self.title = title
         self.artist = artist
         self.timed_lyrics = {}
         self.lock = threading.Lock()
-        self.clean_title()
+        self._stop_event = threading.Event()
+        self.sanatize()
 
-    def clean_title(self) -> str:
+    def sanatize(self) -> str:
         title = self.title
         terms = [
             "official lyrics video",
@@ -25,18 +27,24 @@ class Lyrics:
             "lyric video",
             "visualizer",
             "remastered",
-            "remaster",
+            "nightcore" "remaster",
             "lyrics",
             "lyric",
             "cover",
             "cc",
         ]
-        surrounding = ["[]", "()", "{}"]
+        surrounding = ["[]", "()", "{}", "「」", "  "]
         for outer in surrounding:
             for term in terms:
-                title = title.lower().replace(outer[0] + term + outer[1], "").strip()
+                title = (
+                    title.lower()
+                    .replace((outer[0] + term + outer[1]).strip(), "")
+                    .strip()
+                )
         self.title = title
-        return self.title
+        self.artist = self.artist.replace("- Topic", "").strip()
+
+        return self.title, self.artist
 
     def search(self) -> str:
         lyrics = sl.search(
@@ -85,13 +93,25 @@ class Lyrics:
         return timed_lyrics
 
     def retrieve(self):
-        def get():
-            lyrics = self.parse(self.search())
-            with self.lock:
-                self.timed_lyrics = lyrics
+        def get(event: threading.Event):
+            for _ in range(5):  # retry 5 times, 2 seconds between each attempt
+                lyrics_lrc = self.search()
+                if event.is_set():
+                    return
+
+                lyrics = self.parse(lyrics_lrc)
+                with self.lock:
+                    self.timed_lyrics = lyrics
+                if not self.timed_lyrics.get(-1):
+                    break
+                else:
+                    time.sleep(2)
             print("\033c", end="")  # In case of error, clear console
 
-        self.thread = threading.Thread(target=get)
+        self._stop_event.set()
+        self._stop_event = threading.Event()
+        event = self._stop_event
+        self.thread = threading.Thread(target=get, args=[event], daemon=True)
         self.thread.start()
 
     def get_lyric(self, time: int):
