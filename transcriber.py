@@ -53,7 +53,7 @@ class LyricManager:
         lyrics = sl.search(
             search_term=f"{self.title} {self.artist}",
             synced_only=True,
-            providers=["Lrclib", "Musixmatch", "AZLyrics"],
+            providers=["Lrclib", "NetEase", "Megalobiz", "Genius"],
         )
         return lyrics or ""
 
