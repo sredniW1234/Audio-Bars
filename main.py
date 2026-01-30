@@ -105,7 +105,7 @@ def get_console_width():
 def main():
     playing = NowPlaying()
     run(playing.initalize_mediamanger())
-    playing.get_active_app_user_model_ids
+    # playing.get_active_app_user_model_ids
     # Get initial info
     info_thread = threading.Thread(target=lambda: get_info(playing), daemon=True)
     info_thread.start()
@@ -174,6 +174,7 @@ def main():
                     lyric_to_display = ""
                     lyric_manager.title = title
                     lyric_manager.artist = artist
+                    lyric_manager.sanatize()
                     lyric_manager.retrieve()
                 song_start = monotonic()
                 curr_time = 0

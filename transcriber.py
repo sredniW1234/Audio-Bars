@@ -1,6 +1,7 @@
 import syncedlyrics as sl
 import threading
 import time
+import re
 
 
 class LyricManager:
@@ -13,35 +14,37 @@ class LyricManager:
         self.sanatize()
 
     def sanatize(self) -> str:
-        title = self.title
-        terms = [
-            "official lyrics video",
-            "official cover video",
-            "official lyric video",
-            "official music video",
-            "official video",
-            "official audio",
-            "english cover",
-            "official amv",
-            "lyrics video",
-            "lyric video",
-            "visualizer",
-            "remastered",
-            "nightcore" "remaster",
-            "lyrics",
-            "lyric",
-            "cover",
-            "cc",
-        ]
-        surrounding = ["[]", "()", "{}", "「」", "  "]
-        for outer in surrounding:
-            for term in terms:
-                title = (
-                    title.lower()
-                    .replace((outer[0] + term + outer[1]).strip(), "")
-                    .strip()
-                )
-        self.title = title
+        # terms = [
+        #     "official lyrics video",
+        #     "official cover video",
+        #     "official lyric video",
+        #     "official music video",
+        #     "official video",
+        #     "official audio",
+        #     "english cover",
+        #     "official amv",
+        #     "lyrics video",
+        #     "lyric video",
+        #     "visualizer",
+        #     "remastered",
+        #     "nightcore",
+        #     "remaster",
+        #     "lyrics",
+        #     "lyric",
+        #     "cover",
+        #     "cc",
+        # ]
+        # surrounding = ["[]", "()", "{}", "「」", "  "]
+        # for outer in surrounding:
+        #     for term in terms:
+        #         title = (
+        #             title.lower()
+        #             .replace((outer[0] + term + outer[1]).strip(), "")
+        #             .strip()
+        #         )
+        pattern = r"[【\[\(\{「][^】\]\)\}」]+[】\]\)\}」]"
+
+        self.title = re.sub(pattern, "", self.title.lower()).lower().strip()
         self.artist = self.artist.replace("- Topic", "").strip()
 
         return self.title, self.artist
@@ -94,18 +97,19 @@ class LyricManager:
 
     def retrieve(self):
         def get(event: threading.Event):
-            for _ in range(5):  # retry 5 times, 2 seconds between each attempt
-                lyrics_lrc = self.search()
-                if event.is_set():
-                    return
+            # for _ in range(5):  # retry 5 times, 2 seconds between each attempt
+            lyrics_lrc = self.search()
+            if event.is_set():
+                return
 
-                lyrics = self.parse(lyrics_lrc)
-                with self.lock:
-                    self.timed_lyrics = lyrics
-                if not self.timed_lyrics.get(-1):
-                    break
-                else:
-                    time.sleep(2)
+            lyrics = self.parse(lyrics_lrc)
+            with self.lock:
+                self.timed_lyrics = lyrics
+                # if not self.timed_lyrics.get(-1):
+                # break
+                # else:
+                # print("\033c", end="")  # In case of error, clear console
+
             print("\033c", end="")  # In case of error, clear console
 
         self._stop_event.set()
